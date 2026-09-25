@@ -3,18 +3,6 @@ from langchain_core.callbacks import BaseCallbackHandler
 
 
 class SupportAgentCallback(BaseCallbackHandler):
-    """
-    Custom callback handler covering the complete agent lifecycle:
-    - Agent Start
-    - LLM Start
-    - Tool Start
-    - Tool End
-    - Tool Error
-    - LLM End
-    - Agent End
-
-    Ensures no confidential prompts, API secrets, or raw chain-of-thought are exposed.
-    """
 
     def on_chain_start(
         self, serialized: Optional[Dict[str, Any]], inputs: Dict[str, Any], **kwargs: Any

@@ -42,7 +42,6 @@ Assignment3_Customer_Support_Agent_KingslyWilson/
 ├── memory.py               # ConversationMemory using HumanMessage/AIMessage
 ├── session_manager.py      # Multi-session memory management
 ├── callbacks.py            # SupportAgentCallback full lifecycle handler
-├── test_agent.py           # Automated test suite
 ├── agent_strategy.md       # Comprehensive architectural strategy document
 ├── test_log.md             # Empirical test execution logs
 ├── README.md               # Project documentation

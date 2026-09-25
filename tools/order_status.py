@@ -38,14 +38,12 @@ def get_order_status(order_id: str) -> str:
 
     order_id = order_id.strip().upper()
 
-    # Simulated retry recovery test mode
     if "RETRY_RECOVER" in order_id:
         _SIMULATED_FAILURE_ATTEMPTS[order_id] = _SIMULATED_FAILURE_ATTEMPTS.get(order_id, 0) + 1
         if _SIMULATED_FAILURE_ATTEMPTS[order_id] == 1:
             raise RuntimeError("Temporary network failure connecting to order database.")
         return "Order ID: ORD1005\nStatus: Delivered\nExpected Delivery: 2026-09-20\nCarrier: FedEx"
 
-    # Simulated retry exhaustion test mode
     if "RETRY_FAIL" in order_id:
         raise RuntimeError("Persistent database timeout.")
 

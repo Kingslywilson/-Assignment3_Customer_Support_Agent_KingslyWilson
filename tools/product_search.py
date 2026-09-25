@@ -38,7 +38,6 @@ def search_products(query: str) -> str:
     raw_query = query.strip()
     query_lower = raw_query.lower()
 
-    # Parse price limit (e.g., "under 5000", "below ₹5,000", "less than 3000")
     max_price = None
 
     price_match = re.search(r'(?:under|below|less than|max|up to|<|rs\.?|₹)\s*(\d[\d,.]*)', query_lower)
@@ -57,7 +56,6 @@ def search_products(query: str) -> str:
                 max_price = float(clean_word)
                 break
 
-    # Strip out price patterns and filler words to extract key product search terms
     clean_query = re.sub(r'(?:under|below|less than|max|up to|above|more than|>|<|rs\.?|₹)\s*(\d[\d,.]*)', '', query_lower)
     clean_query = re.sub(r'\b(?:under|below|less|than|max|rs|rupees|in|for|with|show|me|find|get|products?|items?|available|price|priced|search)\b', ' ', clean_query)
     keywords = [kw for kw in clean_query.split() if len(kw) > 1]
@@ -65,11 +63,8 @@ def search_products(query: str) -> str:
     results = []
 
     for product in PRODUCTS:
-        # 1. Apply price filter if specified
         if max_price is not None and product["price"] > max_price:
             continue
-
-        # 2. Build complete searchable text across all product attributes
         searchable_fields = [
             product["name"],
             product["category"],
@@ -80,7 +75,6 @@ def search_products(query: str) -> str:
         ]
         searchable_text = " ".join(searchable_fields).lower()
 
-        # 3. Apply keyword/attribute matching (AND logic across terms)
         if keywords:
             matches_all = True
             for kw in keywords:

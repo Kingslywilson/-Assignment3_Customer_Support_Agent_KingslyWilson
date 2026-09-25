@@ -14,12 +14,10 @@ from session_manager import SessionManager
 
 load_dotenv()
 
-# LangSmith current environment variables configuration
 os.environ.setdefault("LANGSMITH_TRACING", os.getenv("LANGSMITH_TRACING", os.getenv("LANGCHAIN_TRACING_V2", "true")))
 os.environ.setdefault("LANGSMITH_API_KEY", os.getenv("LANGSMITH_API_KEY", os.getenv("LANGCHAIN_API_KEY", "")))
 os.environ.setdefault("LANGSMITH_PROJECT", os.getenv("LANGSMITH_PROJECT", os.getenv("LANGCHAIN_PROJECT", "Assignment3-Customer-Support-Agent")))
 
-# Backward compatibility for legacy SDK versions
 os.environ.setdefault("LANGCHAIN_TRACING_V2", os.getenv("LANGSMITH_TRACING", "true"))
 os.environ.setdefault("LANGCHAIN_API_KEY", os.getenv("LANGSMITH_API_KEY", ""))
 os.environ.setdefault("LANGCHAIN_PROJECT", os.getenv("LANGSMITH_PROJECT", "Assignment3-Customer-Support-Agent"))

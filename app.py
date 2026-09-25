@@ -15,7 +15,6 @@ def ask_agent(session_id: str, question: str) -> str:
 
     final_answer = ""
 
-    # Execute stream progressively
     for chunk in agent_executor.stream(
         {
             "input": question,
@@ -30,7 +29,6 @@ def ask_agent(session_id: str, question: str) -> str:
 
     print()
 
-    # Save to session memory
     memory.add_user_message(question)
     memory.add_ai_message(final_answer)
 

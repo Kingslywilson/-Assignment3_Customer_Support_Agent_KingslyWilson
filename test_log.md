@@ -194,13 +194,3 @@ LANGSMITH_PROJECT=Assignment3-Customer-Support-Agent
 **Passed**. Runs were successfully recorded under project `Assignment3-Customer-Support-Agent` in LangSmith.
 
 ---
-
-## Automated Test Suite Summary
-
-All verification checks executed via `python test_agent.py`:
-- Product Search Price + Keyword AND Filtering: **PASSED**
-- Order Status Lookup: **PASSED**
-- Tool Retry Recovery: **PASSED**
-- Tool Retry 2-Attempt Exhaustion Graceful Fallback: **PASSED**
-- Full Agent Streaming & Callback Lifecycle: **PASSED**
-- Multi-Turn Conversation Memory: **PASSED**

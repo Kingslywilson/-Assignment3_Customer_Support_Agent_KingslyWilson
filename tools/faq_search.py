@@ -46,12 +46,10 @@ def search_faq(query: str) -> str:
 
         query_words = query.split()
 
-        # Match if the complete query is present
         if query in searchable_text:
             results.append(faq)
             continue
 
-        # Match when important query words are present
         matching_words = sum(
             1 for word in query_words
             if len(word) > 2 and word in searchable_text

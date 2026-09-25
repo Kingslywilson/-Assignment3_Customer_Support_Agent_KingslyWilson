@@ -4,8 +4,9 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
 
+from tools.retry_handler import with_tool_retry
 
-# Load order data
+
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "orders.json"
 
 
@@ -18,6 +19,8 @@ def load_orders():
 
 ORDERS = load_orders()
 
+_SIMULATED_FAILURE_ATTEMPTS = {}
+
 
 class OrderStatusInput(BaseModel):
     order_id: str = Field(
@@ -25,6 +28,7 @@ class OrderStatusInput(BaseModel):
     )
 
 
+@with_tool_retry(max_retries=2)
 def get_order_status(order_id: str) -> str:
     if isinstance(order_id, dict):
         order_id = order_id.get("order_id", "")
@@ -33,6 +37,17 @@ def get_order_status(order_id: str) -> str:
         return "Error: Order ID is required."
 
     order_id = order_id.strip().upper()
+
+    # Simulated retry recovery test mode
+    if "RETRY_RECOVER" in order_id:
+        _SIMULATED_FAILURE_ATTEMPTS[order_id] = _SIMULATED_FAILURE_ATTEMPTS.get(order_id, 0) + 1
+        if _SIMULATED_FAILURE_ATTEMPTS[order_id] == 1:
+            raise RuntimeError("Temporary network failure connecting to order database.")
+        return "Order ID: ORD1005\nStatus: Delivered\nExpected Delivery: 2026-09-20\nCarrier: FedEx"
+
+    # Simulated retry exhaustion test mode
+    if "RETRY_FAIL" in order_id:
+        raise RuntimeError("Persistent database timeout.")
 
     if not order_id.startswith("ORD"):
         return "Error: Invalid order ID format. Order ID should start with ORD."

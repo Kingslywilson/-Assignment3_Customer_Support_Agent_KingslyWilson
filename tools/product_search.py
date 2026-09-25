@@ -1,8 +1,11 @@
 import json
+import re
 from pathlib import Path
 
 from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
+
+from tools.retry_handler import with_tool_retry
 
 
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "products.json"
@@ -22,60 +25,77 @@ class ProductSearchInput(BaseModel):
     query: str = Field(
         description=(
             "Product search query. Can contain a product name, "
-            "category, feature, price limit, or availability."
+            "category, feature, price limit, color, or availability."
         )
     )
 
 
+@with_tool_retry(max_retries=2)
 def search_products(query: str) -> str:
     if not query or not query.strip():
         return "Error: Product search query is required."
 
-    query = query.strip().lower()
+    raw_query = query.strip()
+    query_lower = raw_query.lower()
+
+    # Parse price limit (e.g., "under 5000", "below ₹5,000", "less than 3000")
+    max_price = None
+
+    price_match = re.search(r'(?:under|below|less than|max|up to|<|rs\.?|₹)\s*(\d[\d,.]*)', query_lower)
+    if price_match:
+        try:
+            val_str = price_match.group(1).replace(",", "")
+            max_price = float(val_str)
+        except ValueError:
+            pass
+
+    if max_price is None:
+        words = query_lower.replace(",", "").split()
+        for i, word in enumerate(words):
+            clean_word = re.sub(r'[^\d.]', '', word)
+            if clean_word.isdigit() and i > 0 and words[i - 1] in {"under", "below", "less", "than", "<", "max"}:
+                max_price = float(clean_word)
+                break
+
+    # Strip out price patterns and filler words to extract key product search terms
+    clean_query = re.sub(r'(?:under|below|less than|max|up to|above|more than|>|<|rs\.?|₹)\s*(\d[\d,.]*)', '', query_lower)
+    clean_query = re.sub(r'\b(?:under|below|less|than|max|rs|rupees|in|for|with|show|me|find|get|products?|items?|available|price|priced|search)\b', ' ', clean_query)
+    keywords = [kw for kw in clean_query.split() if len(kw) > 1]
 
     results = []
 
-    # Extract a simple "under price" condition
-    max_price = None
-
-    words = query.replace(",", "").split()
-
-    for i, word in enumerate(words):
-        if word.isdigit() and i > 0 and words[i - 1] in {
-            "under",
-            "below",
-            "less",
-            "than"
-        }:
-            max_price = int(word)
-
     for product in PRODUCTS:
-        searchable_text = " ".join(
-            [
-                product["name"],
-                product["category"],
-                product["description"],
-                product["availability"],
-                product["color"],
-                *product["features"],
-            ]
-        ).lower()
+        # 1. Apply price filter if specified
+        if max_price is not None and product["price"] > max_price:
+            continue
 
-        matches_query = query in searchable_text
+        # 2. Build complete searchable text across all product attributes
+        searchable_fields = [
+            product["name"],
+            product["category"],
+            product["description"],
+            product["availability"],
+            product["color"],
+            *product["features"],
+        ]
+        searchable_text = " ".join(searchable_fields).lower()
 
-        matches_price = (
-            max_price is not None
-            and product["price"] < max_price
-        )
+        # 3. Apply keyword/attribute matching (AND logic across terms)
+        if keywords:
+            matches_all = True
+            for kw in keywords:
+                if kw not in searchable_text:
+                    matches_all = False
+                    break
+            if not matches_all:
+                continue
 
-        if matches_query or matches_price:
-            results.append(product)
+        results.append(product)
 
     if not results:
-        return f"No products found for: {query}"
+        return f"No products found matching: '{raw_query}'"
 
     output = []
-
     for product in results:
         output.append(
             f"Product ID: {product['product_id']}\n"

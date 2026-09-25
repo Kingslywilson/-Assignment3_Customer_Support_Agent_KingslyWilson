@@ -1,37 +1,40 @@
+import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 from agent import agent_executor, session_manager
 from callbacks import SupportAgentCallback
 
 
-def ask_agent(session_id: str, question: str):
+def ask_agent(session_id: str, question: str) -> str:
     memory = session_manager.get_session(session_id)
-
-    history = "\n".join(
-        f"{message.type}: {message.content}"
-        for message in memory.get_messages()
-    )
-
-    if history:
-        agent_input = (
-            f"Previous conversation:\n{history}\n\n"
-            f"Current customer question:\n{question}"
-        )
-    else:
-        agent_input = question
-
-    memory.add_user_message(question)
+    chat_history = memory.get_messages()
 
     callback = SupportAgentCallback()
 
-    response = agent_executor.invoke(
-        {"input": agent_input},
+    final_answer = ""
+
+    # Execute stream progressively
+    for chunk in agent_executor.stream(
+        {
+            "input": question,
+            "chat_history": chat_history,
+        },
         config={"callbacks": [callback]},
-    )
+    ):
+        if "output" in chunk:
+            text_chunk = chunk["output"]
+            print(text_chunk, end="", flush=True)
+            final_answer += text_chunk
 
-    answer = response["output"]
+    print()
 
-    memory.add_ai_message(answer)
+    # Save to session memory
+    memory.add_user_message(question)
+    memory.add_ai_message(final_answer)
 
-    return answer
+    return final_answer
 
 
 def main():
@@ -62,10 +65,8 @@ def main():
             continue
 
         try:
-            answer = ask_agent(session_id, question)
-
-            print("\nAgent:")
-            print(answer)
+            print("\nAgent: ", end="", flush=True)
+            ask_agent(session_id, question)
             print()
 
         except Exception as error:

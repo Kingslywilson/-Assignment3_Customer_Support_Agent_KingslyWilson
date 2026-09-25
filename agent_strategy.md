@@ -2,345 +2,108 @@
 
 ## 1. Overview
 
-This project implements an autonomous customer support agent using Python, LangChain, and Groq.
+This project implements an autonomous customer support agent built with **Python 3.11+**, **LangChain**, and **ChatGroq**.
 
-The agent can handle:
-
-- Order status questions
-- Product searches
-- Frequently asked questions
-- Return and refund policy questions
-- Multi-turn conversations
-- Multi-tool requests
-- Unknown or missing information
-- Tool errors and controlled retries
-
-The agent uses tool calling to dynamically decide which tool is required for a customer request.
+The agent handles:
+- Order status queries and delivery tracking
+- Product searches with combined keyword matching and price/attribute filtering
+- Frequently asked questions (FAQ) search
+- Return and refund policy queries
+- Multi-turn conversations with isolated memory
+- Multi-tool execution for compound requests
+- Graceful handling of unknown or missing information
+- Tool errors with an explicit 2-retry mechanism and graceful fallback
+- Progressive streaming and observable full-lifecycle callbacks
+- Production tracing via LangSmith
 
 ---
 
 ## 2. Agent Architecture
 
-The main components are:
-
-- `app.py` - Customer-facing application
-- `agent.py` - LangChain agent and AgentExecutor
-- `memory.py` - Conversation memory
-- `session_manager.py` - Independent conversation sessions
-- `callbacks.py` - Tool and agent execution callbacks
-- `tools/` - Custom support tools
-- `data/` - Mock customer support data
-- `prompts/` - Agent instructions
-
----
-
-## 3. Available Tools
-
-### Order Status Tool
-
-File:
-
-`tools/order_status.py`
-
-Purpose:
-
-- Check an order status
-- Return expected delivery information
-- Return carrier information
-- Validate order IDs
-- Handle unknown orders
-
-The tool never invents order information.
+The main project components are:
+- `app.py` - CLI interaction entrypoint implementing progressive response streaming (`agent_executor.stream`).
+- `agent.py` - LangChain agent initialization (`ChatGroq`, `ChatPromptTemplate`, `create_tool_calling_agent`, `AgentExecutor`).
+- `memory.py` - Session message history container managing `HumanMessage` and `AIMessage` objects.
+- `session_manager.py` - Session manager enforcing memory isolation across unique session IDs.
+- `callbacks.py` - `SupportAgentCallback` handling the full lifecycle (Agent Start, LLM Start, Tool Start, Tool End, Tool Error, LLM End, Agent End) without exposing prompt secrets or internal reasoning.
+- `tools/retry_handler.py` - `@with_tool_retry(max_retries=2)` decorator executing tool retries and graceful fallback.
+- `tools/` - Custom support tools (`order_status.py`, `product_search.py`, `faq_search.py`, `return_policy.py`).
+- `data/` - Mock JSON data stores (`orders.json`, `products.json`, `faq.json`, `return_policy.json`).
+- `prompts/agent_prompt.txt` - System instructions for customer support behavior and safety constraints.
+- `test_agent.py` - Automated verification test suite.
 
 ---
 
-### Product Search Tool
+## 3. Custom Support Tools
 
-File:
+### Order Status Tool (`tools/order_status.py`)
+- Purpose: Retrieve status, expected delivery date, and carrier for order IDs starting with `ORD`.
+- Protection: Validates order ID formatting and returns error messages for invalid formats or unknown orders without hallucinating data. Includes simulated retry test paths.
 
-`tools/product_search.py`
+### Product Search Tool (`tools/product_search.py`)
+- Purpose: Search product catalog based on product name, category, description, features, color, availability, or price limits.
+- Price & Attribute Filter Fix: Employs strict combined **AND logic** (matching both keywords and numeric price constraints like `"wireless headphones under ₹5,000"`).
 
-Purpose:
+### FAQ Search Tool (`tools/faq_search.py`)
+- Purpose: Search predefined support FAQ items covering shipping, payment, order modifications, cancellation, warranty, account management, and support channels.
 
-- Search products
-- Search by name
-- Search by category
-- Search by feature
-- Search by price
-- Search by availability
-
-The tool only returns products present in the configured catalog.
-
----
-
-### FAQ Search Tool
-
-File:
-
-`tools/faq_search.py`
-
-Purpose:
-
-- Search predefined customer support FAQs
-- Answer questions about shipping
-- Payment
-- Order modification
-- Cancellation
-- Warranty
-- Account information
-- Customer support
-
-The tool does not invent FAQ information.
+### Return Policy Tool (`tools/return_policy.py`)
+- Purpose: Provide exact return policy details (standard return period, refund timelines, opened electronics rules, unused conditions, return fees, damaged products, exceptions).
 
 ---
 
-### Return Policy Tool
+## 4. Tool Retry & Failure Handling (`tools/retry_handler.py`)
 
-File:
-
-`tools/return_policy.py`
-
-Purpose:
-
-- Return period information
-- Refund information
-- Return eligibility information
-- Damaged product information
-- Return charges
-- Exceptions
-
-The tool only uses the configured return policy.
+- **Maximum Retries**: Exactly 2 retries (total 3 attempts).
+- **Temporary Failure Recovery**: When a tool encounters a temporary network, database, or runtime exception, the wrapper logs a retry warning, waits briefly, and retries execution.
+- **Graceful Fallback**: If a tool fails on all 3 attempts (initial attempt + 2 retries), the retry handler catches the exception and returns a user-friendly fallback message:
+  > *"We are currently experiencing temporary technical issues with this service. Please try again later."*
 
 ---
 
-## 4. Dynamic Tool Selection
+## 5. Progressive Streaming (`app.py`)
 
-The agent decides which tool is required based on the customer's request.
-
-Examples:
-
-Customer:
-
-"What is the status of ORD1005?"
-
-Selected tool:
-
-`order_status`
-
-Customer:
-
-"Do you have wireless headphones?"
-
-Selected tool:
-
-`product_search`
-
-Customer:
-
-"How long does standard delivery take?"
-
-Selected tool:
-
-`faq_search`
-
-Customer:
-
-"How many days do I have to return a product?"
-
-Selected tool:
-
-`return_policy`
-
-The agent does not call a tool when the required information is missing.
-
-For example:
-
-"What is the status of my order?"
-
-The agent asks the customer for the order ID.
+- Uses `agent_executor.stream(...)` to stream response chunks progressively to the user console.
+- Output tokens and execution steps appear live without blocking the terminal interface until completion.
 
 ---
 
-## 5. Multi-Tool Execution
+## 6. Lifecycle Callbacks (`callbacks.py`)
 
-The agent can use multiple tools when a request requires information from different sources.
+The custom `SupportAgentCallback` handler hooks into the full execution lifecycle:
+1. `on_chain_start` -> `[AGENT START]`
+2. `on_llm_start` -> `[LLM START]` (Logs model invocation without exposing internal system prompts)
+3. `on_tool_start` -> `[TOOL START]` & `[TOOL INPUT]`
+4. `on_tool_end` -> `[TOOL END]` & `[TOOL RESULT]`
+5. `on_tool_error` -> `[TOOL ERROR]`
+6. `on_llm_end` -> `[LLM END]`
+7. `on_agent_finish` -> `[AGENT END]`
 
-Example:
-
-"What is the status of ORD1005 and what is the return policy?"
-
-The agent can:
-
-1. Call `order_status`
-2. Call `return_policy`
-3. Combine the results
-4. Provide one final response
-
-This allows the agent to handle compound customer requests.
+Confidentiality & Safety: Internal chain-of-thought reasoning, API keys, and prompt instructions are kept private and omitted from output logs.
 
 ---
 
-## 6. Conversation Memory
+## 7. Conversation Memory & Session Isolation
 
-Conversation memory is implemented using `ConversationMemory`.
-
-The memory stores:
-
-- Customer messages
-- Agent responses
-
-The stored conversation is passed to the agent when processing later messages.
-
-Example:
-
-Customer:
-
-"What is the status of ORD1005?"
-
-Agent:
-
-"The order is shipped."
-
-Customer:
-
-"When should it arrive?"
-
-The agent can use the previous conversation to identify `ORD1005`.
+- **Memory**: `ConversationMemory` stores structured `HumanMessage` and `AIMessage` objects.
+- **Prompt Integration**: `agent.py` injects previous message history into `ChatPromptTemplate` using `MessagesPlaceholder(variable_name="chat_history")`.
+- **Session Isolation**: `SessionManager` maintains a dictionary mapping `session_id` to separate `ConversationMemory` instances, preventing cross-session memory leakage.
 
 ---
 
-## 7. Session Isolation
+## 8. LangSmith Observability
 
-`SessionManager` maintains separate memory for each session.
+LangSmith tracing is configured using current environment variable standards:
+- `LANGSMITH_TRACING=true`
+- `LANGSMITH_API_KEY=your_langsmith_api_key_here`
+- `LANGSMITH_PROJECT=Assignment3-Customer-Support-Agent`
 
-Example:
-
-Session A:
-
-`ORD1005`
-
-Session B:
-
-No order information
-
-Information from Session A is not shared with Session B.
-
-This prevents cross-session conversation leakage.
+Legacy aliases (`LANGCHAIN_TRACING_V2`, `LANGCHAIN_API_KEY`, `LANGCHAIN_PROJECT`) are maintained for backward compatibility.
 
 ---
 
-## 8. Error Handling
+## 9. Security & Safety
 
-The agent handles:
-
-- Missing order IDs
-- Invalid order IDs
-- Unknown orders
-- Unknown products
-- Missing FAQ information
-- Missing return policy information
-- Tool failures
-
-Tool results are treated as the source of truth.
-
-The agent does not create information when a tool cannot provide an answer.
-
----
-
-## 9. Controlled Retry
-
-A controlled retry mechanism is demonstrated using a test tool.
-
-The test tool intentionally fails on the first attempt and succeeds on the second attempt.
-
-The retry mechanism limits the number of attempts so that a continuously failing tool does not cause an infinite loop.
-
----
-
-## 10. Loop Protection
-
-The `AgentExecutor` is configured with:
-
-- Maximum iterations: 5
-- Maximum execution time: 30 seconds
-- Parsing error handling
-
-This limits excessive agent execution.
-
----
-
-## 11. Streaming
-
-The agent supports streaming through:
-
-`AgentExecutor.stream()`
-
-This allows the application to display generated output progressively instead of waiting for the complete response.
-
----
-
-## 12. Callbacks
-
-Custom callbacks are implemented in:
-
-`callbacks.py`
-
-The callbacks provide observable execution information such as:
-
-- Tool name
-- Tool input
-- Tool result
-- Tool errors
-- Agent completion
-
-Private chain-of-thought is not exposed.
-
----
-
-## 13. LangSmith Tracing
-
-LangSmith tracing is enabled through environment variables.
-
-Configured variables include:
-
-- `LANGCHAIN_TRACING_V2`
-- `LANGCHAIN_API_KEY`
-- `LANGCHAIN_PROJECT`
-
-The project was tested with LangSmith tracing enabled and an agent run was successfully recorded.
-
----
-
-## 14. Security
-
-The agent uses mock customer support data only.
-
-The agent is instructed not to request or expose:
-
-- Passwords
-- OTPs
-- CVV
-- PINs
-- Full card numbers
-- Authentication tokens
-- API keys
-
-Sensitive credentials are never stored in the project source code.
-
-Environment secrets are stored in `.env`.
-
-The `.env` file is excluded using `.gitignore`.
-
----
-
-## 15. Stop Condition
-
-The agent stops when:
-
-- The required tool information has been obtained
-- The customer request has been answered
-- Required information is missing and clarification is needed
-- A safe response must be returned because information is unavailable
-- Execution limits are reached
-
-This prevents unnecessary tool calls and infinite execution.
+- Uses mock customer support data only.
+- Strict instructions prohibit requesting or revealing sensitive user data (passwords, OTPs, CVV, PINs, card numbers, API keys).
+- API credentials stored exclusively in `.env` (git-ignored via `.gitignore`).

@@ -1,185 +1,131 @@
 # Autonomous Customer Support Agent
 
-An autonomous customer support agent built using Python, LangChain, and Groq.
+An autonomous customer support agent built using **Python 3.11+**, **LangChain**, and **ChatGroq**.
 
-## Features
+## Overview & Architecture
 
-- Order status lookup
-- Product search
-- FAQ search
-- Return and refund policy
-- Multi-turn conversations
-- Multi-tool execution
-- Session isolation
-- Error handling
-- Controlled retry
-- Execution limits
-- Streaming
-- Custom callbacks
-- LangSmith tracing
-- Input validation
-- Security handling
+The system uses `create_tool_calling_agent` paired with `AgentExecutor` to handle customer inquiries dynamically.
+
+### Key Capabilities
+
+- **Order Status Lookup**: Track order status, expected delivery, and carrier details.
+- **Product Search**: Perform combined keyword and price filter searches (e.g. *"wireless headphones under ₹5,000"*), with support for category, feature, color, and availability filtering.
+- **FAQ Search**: Search knowledge base for policies regarding shipping, payment, warranty, and account management.
+- **Return Policy**: Retrieve standard return windows, refund timelines, opened electronics policies, damaged item handling, and fees.
+- **Multi-Turn Memory**: Retain context across turns using `HumanMessage` and `AIMessage` history in `MessagesPlaceholder(variable_name="chat_history")`.
+- **Session Isolation**: Maintain independent conversation sessions via `SessionManager`.
+- **Real Tool Retries**: Tool failure wrapper retry mechanism with **Maximum Retries = 2** (3 total attempts). Falls back gracefully after 2 retries to:  
+  *"We are currently experiencing temporary technical issues with this service. Please try again later."*
+- **Real Streaming**: Progressive step and token streaming via `agent_executor.stream(...)`.
+- **Full-Lifecycle Callbacks**: Custom `SupportAgentCallback` covering Agent Start, LLM Start, Tool Start, Tool End, Tool Error, LLM End, and Agent End without exposing prompt secrets or chain-of-thought reasoning.
+- **LangSmith Tracing**: Production tracing using `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and `LANGSMITH_PROJECT`.
+
+---
+
+## Technical Stack & Version Requirements
+
+- **Python**: `3.11+`
+- **LangChain**: `langchain >= 0.3.0`, `langchain-core >= 0.3.0`, `langchain-groq >= 0.2.0`
+- **LLM Provider**: ChatGroq (`openai/gpt-oss-20b` or `llama-3.3-70b-versatile`)
+- **Environment Management**: `python-dotenv`
+- **Data Validation**: `pydantic >= 2.0`
+
+---
 
 ## Project Structure
 
 ```text
 Assignment3_Customer_Support_Agent_KingslyWilson/
 │
-├── app.py
-├── agent.py
-├── memory.py
-├── session_manager.py
-├── callbacks.py
+├── app.py                  # CLI application with real response streaming
+├── agent.py                # Agent & AgentExecutor setup with LangSmith config
+├── memory.py               # ConversationMemory using HumanMessage/AIMessage
+├── session_manager.py      # Multi-session memory management
+├── callbacks.py            # SupportAgentCallback full lifecycle handler
+├── test_agent.py           # Automated test suite
+├── agent_strategy.md       # Comprehensive architectural strategy document
+├── test_log.md             # Empirical test execution logs
+├── README.md               # Project documentation
+├── requirements.txt        # Python package dependencies
+├── .env.example            # Environment variables template
+├── .gitignore              # Ignored files (.env, venv, pycache)
 │
-├── tools/
+├── tools/                  # Custom tools with @with_tool_retry(max_retries=2)
 │   ├── __init__.py
-│   ├── order_status.py
-│   ├── product_search.py
-│   ├── faq_search.py
-│   └── return_policy.py
+│   ├── retry_handler.py    # Retry decorator & graceful fallback handler
+│   ├── order_status.py     # Order status lookup tool
+│   ├── product_search.py   # Product search with combined price+keyword filtering
+│   ├── faq_search.py       # FAQ search tool
+│   └── return_policy.py    # Return policy lookup tool
 │
-├── prompts/
+├── prompts/                # System prompts
 │   └── agent_prompt.txt
 │
-├── data/
-│   ├── orders.json
-│   ├── products.json
-│   ├── faq.json
-│   └── return_policy.json
-│
-├── agent_strategy.md
-├── test_log.md
-├── README.md
-├── requirements.txt
-├── .env.example
-└── .gitignore
-Setup
+└── data/                   # Mock JSON data stores
+    ├── orders.json
+    ├── products.json
+    ├── faq.json
+    └── return_policy.json
+```
 
-Create and activate a Python virtual environment.
+---
 
-Install the required dependencies:
+## Setup & Installation
 
-pip install -r requirements.txt
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Kingslywilson/-Assignment3_Customer_Support_Agent_KingslyWilson.git
+   cd Assignment3_Customer_Support_Agent_KingslyWilson
+   ```
 
-Create a .env file using .env.example as a reference.
+2. **Create and activate a virtual environment**:
+   ```bash
+   python -m venv venv
+   # On Windows:
+   .\venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
 
-Add your API keys:
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-GROQ_API_KEY=your_groq_api_key
+4. **Configure environment variables**:
+   Create a `.env` file based on `.env.example`:
+   ```ini
+   GROQ_API_KEY=your_groq_api_key_here
 
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY=your_langsmith_api_key
-LANGCHAIN_PROJECT=Assignment3-Customer-Support-Agent
+   LANGSMITH_TRACING=true
+   LANGSMITH_API_KEY=your_langsmith_api_key_here
+   LANGSMITH_PROJECT=Assignment3-Customer-Support-Agent
+   ```
 
-Do not share or commit the .env file.
+---
 
-Run
+## How to Run
 
-Start the application:
-
+### Interactive Application
+Run the interactive CLI with streaming:
+```bash
 python app.py
+```
+Enter a session ID (e.g., `customer1`), then type questions such as:
+- *"Can you find wireless headphones under ₹5,000?"*
+- *"What is the status of order ORD1005?"*
+- *"How many days do I have to return a product?"*
 
-Enter a session ID when prompted.
+### Automated Test Suite
+To verify retry mechanisms, price filtering, streaming, callbacks, and memory:
+```bash
+python test_agent.py
+```
 
-Example:
+---
 
-Session ID: customer1
+## Security
 
-Then ask questions such as:
-
-What is the status of order ORD1005?
-
-or:
-
-How long does standard delivery take?
-
-Type exit to close the application.
-
-Supported Operations
-Order Status
-
-The agent can check:
-
-Order status
-Expected delivery
-Carrier information
-Product Search
-
-The agent can search products by:
-
-Product name
-Category
-Features
-Price
-Availability
-FAQ
-
-The agent can answer configured questions about:
-
-Shipping
-Payment
-Order modification
-Cancellation
-Warranty
-Account information
-Customer support
-Return Policy
-
-The agent can provide configured information about:
-
-Return period
-Refund timeline
-Return eligibility
-Opened electronics
-Damaged products
-Return charges
-Exceptions
-Testing
-
-The project was tested for:
-
-Order status
-Product search
-FAQ search
-Return policy
-Multi-tool requests
-Multi-turn conversations
-Session isolation
-Unknown orders
-Unknown products
-Missing information
-Invalid order IDs
-Tool failures
-Controlled retry
-Execution limits
-Streaming
-Callbacks
-LangSmith tracing
-Security handling
-
-Detailed test results are available in test_log.md.
-
-Security
-
-This project uses mock customer support data only.
-
-The agent must not request or expose:
-
-Passwords
-OTPs
-CVV
-PINs
-Full card numbers
-Authentication tokens
-API keys
-
-API keys are stored in .env and are excluded from version control using .gitignore.
-
-Technology
-Python 3.11
-LangChain
-LangChain Groq
-Groq
-Pydantic
-LangSmith
-python-dotenv
+- This project uses mock data only.
+- Strict prompt rules prevent requesting or outputting passwords, OTPs, CVV, PINs, card numbers, tokens, or API keys.
+- Secrets are stored strictly in `.env` and excluded from git via `.gitignore`.

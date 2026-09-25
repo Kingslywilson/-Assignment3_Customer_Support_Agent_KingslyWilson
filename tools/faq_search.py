@@ -4,6 +4,8 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
 
+from tools.retry_handler import with_tool_retry
+
 
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "faq.json"
 
@@ -24,6 +26,7 @@ class FAQSearchInput(BaseModel):
     )
 
 
+@with_tool_retry(max_retries=2)
 def search_faq(query: str) -> str:
     if not query or not query.strip():
         return "Error: FAQ search query is required."

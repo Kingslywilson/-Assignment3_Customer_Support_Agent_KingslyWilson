@@ -14,6 +14,16 @@ from session_manager import SessionManager
 
 load_dotenv()
 
+# LangSmith current environment variables configuration
+os.environ.setdefault("LANGSMITH_TRACING", os.getenv("LANGSMITH_TRACING", os.getenv("LANGCHAIN_TRACING_V2", "true")))
+os.environ.setdefault("LANGSMITH_API_KEY", os.getenv("LANGSMITH_API_KEY", os.getenv("LANGCHAIN_API_KEY", "")))
+os.environ.setdefault("LANGSMITH_PROJECT", os.getenv("LANGSMITH_PROJECT", os.getenv("LANGCHAIN_PROJECT", "Assignment3-Customer-Support-Agent")))
+
+# Backward compatibility for legacy SDK versions
+os.environ.setdefault("LANGCHAIN_TRACING_V2", os.getenv("LANGSMITH_TRACING", "true"))
+os.environ.setdefault("LANGCHAIN_API_KEY", os.getenv("LANGSMITH_API_KEY", ""))
+os.environ.setdefault("LANGCHAIN_PROJECT", os.getenv("LANGSMITH_PROJECT", "Assignment3-Customer-Support-Agent"))
+
 tools = [
     order_status_tool,
     product_search_tool,
@@ -25,6 +35,7 @@ llm = ChatGroq(
     model="openai/gpt-oss-20b",
     temperature=0,
     api_key=os.getenv("GROQ_API_KEY"),
+    streaming=True,
 )
 
 with open("prompts/agent_prompt.txt", "r", encoding="utf-8") as file:
@@ -33,6 +44,7 @@ with open("prompts/agent_prompt.txt", "r", encoding="utf-8") as file:
 prompt = ChatPromptTemplate.from_messages(
     [
         ("system", agent_instructions),
+        MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ]
@@ -47,7 +59,7 @@ agent = create_tool_calling_agent(
 agent_executor = AgentExecutor(
     agent=agent,
     tools=tools,
-    verbose=True,
+    verbose=False,
     max_iterations=5,
     max_execution_time=30,
     handle_parsing_errors=True,

@@ -30,7 +30,6 @@ The main project components are:
 - `tools/` - Custom support tools (`order_status.py`, `product_search.py`, `faq_search.py`, `return_policy.py`).
 - `data/` - Mock JSON data stores (`orders.json`, `products.json`, `faq.json`, `return_policy.json`).
 - `prompts/agent_prompt.txt` - System instructions for customer support behavior and safety constraints.
-- `test_agent.py` - Automated verification test suite.
 
 ---
 

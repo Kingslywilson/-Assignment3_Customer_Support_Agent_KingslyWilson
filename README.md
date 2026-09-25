@@ -115,14 +115,6 @@ Enter a session ID (e.g., `customer1`), then type questions such as:
 - *"What is the status of order ORD1005?"*
 - *"How many days do I have to return a product?"*
 
-### Automated Test Suite
-To verify retry mechanisms, price filtering, streaming, callbacks, and memory:
-```bash
-python test_agent.py
-```
-
----
-
 ## Security
 
 - This project uses mock data only.

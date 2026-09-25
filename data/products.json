@@ -1,0 +1,88 @@
+{
+  "products": [
+    {
+      "product_id": "PRD201",
+      "name": "Wireless Headphones",
+      "category": "Audio",
+      "description": "Over-ear wireless headphones for music and calls.",
+      "price": 3499,
+      "features": [
+        "Bluetooth",
+        "Noise Isolation",
+        "Built-in Microphone"
+      ],
+      "availability": "In Stock",
+      "color": "Black"
+    },
+    {
+      "product_id": "PRD202",
+      "name": "Mechanical Keyboard",
+      "category": "Computer Accessories",
+      "description": "Mechanical keyboard suitable for gaming and office use.",
+      "price": 4299,
+      "features": [
+        "Mechanical Switches",
+        "RGB Lighting",
+        "USB-C"
+      ],
+      "availability": "In Stock",
+      "color": "Black"
+    },
+    {
+      "product_id": "PRD203",
+      "name": "Wireless Mouse",
+      "category": "Computer Accessories",
+      "description": "Compact wireless mouse with adjustable sensitivity.",
+      "price": 1299,
+      "features": [
+        "Wireless",
+        "Adjustable DPI",
+        "USB Receiver"
+      ],
+      "availability": "In Stock",
+      "color": "Black"
+    },
+    {
+      "product_id": "PRD204",
+      "name": "Bluetooth Speaker",
+      "category": "Audio",
+      "description": "Portable Bluetooth speaker for indoor and outdoor use.",
+      "price": 2499,
+      "features": [
+        "Bluetooth",
+        "Portable",
+        "Water Resistant"
+      ],
+      "availability": "In Stock",
+      "color": "Blue"
+    },
+    {
+      "product_id": "PRD205",
+      "name": "Gaming Monitor",
+      "category": "Monitors",
+      "description": "27-inch monitor designed for gaming.",
+      "price": 18999,
+      "features": [
+        "144Hz",
+        "Full HD",
+        "Low Response Time"
+      ],
+      "availability": "In Stock",
+      "color": "Black"
+    },
+    {
+      "product_id": "PRD206",
+      "name": "USB-C Hub",
+      "category": "Computer Accessories",
+      "description": "Multi-port USB-C hub for laptops and tablets.",
+      "price": 1999,
+      "features": [
+        "USB-C",
+        "HDMI",
+        "USB 3.0"
+      ],
+      "availability": "Out of Stock",
+      "color": "Gray"
+    }
+  ]
+}

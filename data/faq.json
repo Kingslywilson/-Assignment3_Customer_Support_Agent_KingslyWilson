@@ -1,0 +1,52 @@
+{
+  "faqs": [
+    {
+      "id": "FAQ001",
+      "topic": "Shipping",
+      "question": "How long does standard delivery take?",
+      "answer": "Standard delivery usually takes 3 to 5 business days."
+    },
+    {
+      "id": "FAQ002",
+      "topic": "Shipping",
+      "question": "Do you provide shipment tracking?",
+      "answer": "Yes. Tracking information is provided after the order has been shipped."
+    },
+    {
+      "id": "FAQ003",
+      "topic": "Payment",
+      "question": "What payment options are available?",
+      "answer": "Customers can use the payment methods supported during checkout."
+    },
+    {
+      "id": "FAQ004",
+      "topic": "Order Modification",
+      "question": "Can I modify my order after placing it?",
+      "answer": "Order modifications are possible only before the order enters processing."
+    },
+    {
+      "id": "FAQ005",
+      "topic": "Cancellation",
+      "question": "Can I cancel my order?",
+      "answer": "Orders may be cancelled before they are shipped."
+    },
+    {
+      "id": "FAQ006",
+      "topic": "Warranty",
+      "question": "Do products have a warranty?",
+      "answer": "Warranty coverage depends on the product and its applicable warranty terms."
+    },
+    {
+      "id": "FAQ007",
+      "topic": "Account",
+      "question": "How can I update my account information?",
+      "answer": "Account information can be updated through the account settings available in the customer account."
+    },
+    {
+      "id": "FAQ008",
+      "topic": "Support",
+      "question": "How can I contact customer support?",
+      "answer": "Customers can contact the support team through the available customer support channels."
+    }
+  ]
+}

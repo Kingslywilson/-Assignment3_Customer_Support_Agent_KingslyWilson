@@ -1,0 +1,34 @@
+{
+  "orders": [
+    {
+      "order_id": "ORD1001",
+      "status": "Processing",
+      "expected_delivery": "28-Sep-2026",
+      "carrier": "Sample Logistics"
+    },
+    {
+      "order_id": "ORD1005",
+      "status": "Shipped",
+      "expected_delivery": "22-Sep-2026",
+      "carrier": "Sample Logistics"
+    },
+    {
+      "order_id": "ORD1010",
+      "status": "Out for Delivery",
+      "expected_delivery": "25-Sep-2026",
+      "carrier": "FastTrack Delivery"
+    },
+    {
+      "order_id": "ORD1020",
+      "status": "Delivered",
+      "expected_delivery": "20-Sep-2026",
+      "carrier": "FastTrack Delivery"
+    },
+    {
+      "order_id": "ORD1030",
+      "status": "Cancelled",
+      "expected_delivery": null,
+      "carrier": null
+    }
+  ]
+}

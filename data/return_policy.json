@@ -1,0 +1,11 @@
+{
+  "return_policy": {
+    "standard_return_period": "10 days from the date of delivery",
+    "opened_electronics": "Opened electronics are eligible for return if they meet the applicable return conditions.",
+    "unused_products": "Products should be in acceptable return condition and include applicable accessories.",
+    "refund_timeline": "Approved refunds are processed within 5 to 7 business days after the return is received and approved.",
+    "return_charges": "Return charges may apply depending on the reason for the return and the applicable policy conditions.",
+    "damaged_products": "Customers should report products received damaged through customer support.",
+    "exceptions": "Certain products may be excluded from return eligibility according to their applicable product-specific conditions."
+  }
+}

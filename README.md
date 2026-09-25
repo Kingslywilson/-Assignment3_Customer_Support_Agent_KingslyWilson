@@ -53,73 +53,133 @@ Assignment3_Customer_Support_Agent_KingslyWilson/
 ├── requirements.txt
 ├── .env.example
 └── .gitignore
-
 Setup
 
 Create and activate a Python virtual environment.
 
-Install dependencies:
+Install the required dependencies:
 
 pip install -r requirements.txt
 
-Create a .env file from .env.example.
+Create a .env file using .env.example as a reference.
 
-Add:
+Add your API keys:
 
 GROQ_API_KEY=your_groq_api_key
+
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=your_langsmith_api_key
 LANGCHAIN_PROJECT=Assignment3-Customer-Support-Agent
+
+Do not share or commit the .env file.
+
 Run
 
-Start the application with:
+Start the application:
 
 python app.py
+
+Enter a session ID when prompted.
+
+Example:
+
+Session ID: customer1
+
+Then ask questions such as:
+
+What is the status of order ORD1005?
+
+or:
+
+How long does standard delivery take?
+
+Type exit to close the application.
+
+Supported Operations
+Order Status
+
+The agent can check:
+
+Order status
+Expected delivery
+Carrier information
+Product Search
+
+The agent can search products by:
+
+Product name
+Category
+Features
+Price
+Availability
+FAQ
+
+The agent can answer configured questions about:
+
+Shipping
+Payment
+Order modification
+Cancellation
+Warranty
+Account information
+Customer support
+Return Policy
+
+The agent can provide configured information about:
+
+Return period
+Refund timeline
+Return eligibility
+Opened electronics
+Damaged products
+Return charges
+Exceptions
 Testing
 
-The project includes tests for:
+The project was tested for:
 
 Order status
 Product search
-FAQ
+FAQ search
 Return policy
 Multi-tool requests
 Multi-turn conversations
 Session isolation
-Unknown information
-Tool retry
+Unknown orders
+Unknown products
+Missing information
+Invalid order IDs
+Tool failures
+Controlled retry
+Execution limits
 Streaming
 Callbacks
 LangSmith tracing
+Security handling
+
+Detailed test results are available in test_log.md.
+
 Security
-Security
 
-This project uses mock customer support data.
+This project uses mock customer support data only.
 
-Do not store real passwords, OTPs, CVV, PINs, card numbers, API keys, or authentication tokens in the project.
+The agent must not request or expose:
 
-The .env file is excluded from version control.
+Passwords
+OTPs
+CVV
+PINs
+Full card numbers
+Authentication tokens
+API keys
+
+API keys are stored in .env and are excluded from version control using .gitignore.
 
 Technology
-Python
+Python 3.11
 LangChain
 LangChain Groq
 Groq
 Pydantic
 LangSmith
 python-dotenv
-
----
-
-# 5. `.env.example`
-
-Use:
-
-```text
-GROQ_API_KEY=your_groq_api_key_here
-
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY=your_langsmith_api_key_here
-LANGCHAIN_PROJECT=Assignment3-Customer-Support-Agent
-
-Do not put your real API keys in .env.example.
